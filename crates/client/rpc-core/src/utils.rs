@@ -4,12 +4,13 @@ use std::sync::Arc;
 use anyhow::{anyhow, Result};
 use blockifier::execution::contract_class::{ContractClass as BlockifierContractClass, ContractClassV1};
 use cairo_lang_casm_contract_class::{CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints};
+use cairo_lang_sierra::program::Program as SierraProgram;
 use cairo_lang_starknet::contract_class::{
     ContractClass as SierraContractClass, ContractEntryPoint, ContractEntryPoints,
 };
 use cairo_lang_starknet::contract_class_into_casm_contract_class::StarknetSierraCompilationError;
 use cairo_lang_utils::bigint::BigUintAsHex;
-use cairo_vm::types::program::Program;
+use cairo_vm::types::program::{Program, SharedProgramData};
 use flate2::read::GzDecoder;
 use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
@@ -50,6 +51,7 @@ pub fn to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -> Re
                 abi: None, // TODO: add ABI
             }));
         }
+        // handle v1
         ContractClassWrapper::V1(contract_class_wrapped) => Ok(ContractClass::Sierra(FlattenedSierraClass {
             sierra_program: vec![], // TODO: add sierra program
             contract_class_version: contract_class_wrapped.program.compiler_version,
@@ -311,4 +313,11 @@ fn casm_entry_point_to_compiled_entry_point(value: &CasmContractEntryPoint) -> C
 
 fn biguint_to_field_element(value: &BigUint) -> FieldElement {
     FieldElement::from_str(value.to_string().as_str()).unwrap()
+}
+
+// utils to read casm from bytes and return [BlockifierContractClass]
+pub fn get_casm_from_bytes(bytes: &[u8]) -> BlockifierContractClass {
+    // read CasmContractClass from bytes
+    let casm_contract_class: CasmContractClass = serde_json::from_slice(bytes).unwrap();
+    BlockifierContractClass::V1(ContractClassV1::try_from(casm_contract_class).unwrap())
 }
