@@ -580,7 +580,6 @@ mod reexport_private_types {
     };
 
     use super::*;
-    use crate::transaction::utils::to_hash_map_entrypoints;
     /// Wrapper type for broadcasted transaction conversion errors.
     #[derive(Debug, Error)]
     pub enum BroadcastedTransactionConversionErrorWrapper {
@@ -622,81 +621,6 @@ mod reexport_private_types {
         /// Failed to compute the contract class hash.
         #[error(transparent)]
         ClassHashComputationError(#[from] ComputeClassHashError),
-    }
-
-    fn to_raw_legacy_entry_points(entry_points: LegacyEntryPointsByType) -> RawLegacyEntryPoints {
-        RawLegacyEntryPoints {
-            constructor: entry_points.constructor.into_iter().map(to_raw_legacy_entry_point).collect(),
-            external: entry_points.external.into_iter().map(to_raw_legacy_entry_point).collect(),
-            l1_handler: entry_points.l1_handler.into_iter().map(to_raw_legacy_entry_point).collect(),
-        }
-    }
-
-    fn to_raw_legacy_entry_point(entry_point: LegacyContractEntryPoint) -> RawLegacyEntryPoint {
-        RawLegacyEntryPoint {
-            offset: LegacyEntrypointOffset::U64AsInt(entry_point.offset),
-            selector: entry_point.selector,
-        }
-    }
-
-    impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
-        type Error = BroadcastedTransactionConversionErrorWrapper;
-        fn try_from(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction, Self::Error> {
-            match tx {
-                BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
-                    let signature = declare_tx_v1
-                        .signature
-                        .iter()
-                        .map(|f| (*f).into())
-                        .collect::<Vec<Felt252Wrapper>>()
-                        .try_into()
-                        .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
-
-                    // Create a GzipDecoder to decompress the bytes
-                    let mut gz = GzDecoder::new(&declare_tx_v1.contract_class.program[..]);
-
-                    // Read the decompressed bytes into a Vec<u8>
-                    let mut decompressed_bytes = Vec::new();
-                    std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes).map_err(|_| {
-                        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
-                    })?;
-
-                    // Deserialize it then
-                    let program: Program = Program::from_bytes(&decompressed_bytes, None).map_err(|_| {
-                        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
-                    })?;
-                    let legacy_contract_class = LegacyContractClass {
-                        program: serde_json::from_slice(decompressed_bytes.as_slice())
-                            .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
-                        abi: match declare_tx_v1.contract_class.abi.as_ref() {
-                            Some(abi) => abi.iter().cloned().map(|entry| entry.into()).collect::<Vec<_>>(),
-                            None => vec![],
-                        },
-                        entry_points_by_type: to_raw_legacy_entry_points(
-                            declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                        ),
-                    };
-
-                    Ok(DeclareTransaction {
-                        version: 1_u8,
-                        sender_address: declare_tx_v1.sender_address.into(),
-                        nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
-                        max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
-                        signature,
-                        contract_class: ContractClassWrapper {
-                            program: program
-                                .try_into()
-                                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
-                            entry_points_by_type: EntrypointMapWrapper::new(to_hash_map_entrypoints(
-                                declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                            )),
-                        },
-                        compiled_class_hash: legacy_contract_class.class_hash()?.into(),
-                    })
-                }
-                BroadcastedDeclareTransaction::V2(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
-            }
-        }
     }
 
     impl TryFrom<BroadcastedInvokeTransaction> for InvokeTransaction {
