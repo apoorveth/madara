@@ -28,7 +28,7 @@ pub use frame_system::Call as SystemCall;
 use frame_system::EventRecord;
 use mp_starknet::crypto::hash::Hasher;
 use mp_starknet::execution::types::{
-    ClassHashWrapper, ContractAddressWrapper, ContractClassV0Wrapper, Felt252Wrapper, StorageKeyWrapper,
+    ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
 };
 use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
@@ -262,7 +262,7 @@ impl_runtime_apis! {
             Starknet::contract_class_hash_by_address(address)
         }
 
-        fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassV0Wrapper> {
+        fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper> {
             Starknet::contract_class_by_class_hash(class_hash)
         }
 

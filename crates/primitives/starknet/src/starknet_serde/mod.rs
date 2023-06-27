@@ -11,8 +11,7 @@ use thiserror_no_std::Error;
 
 use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::types::{
-    CallEntryPointWrapper, ContractClassV0Wrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
-    MaxCalldataSize,
+    CallEntryPointWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError, MaxCalldataSize,
 };
 use crate::transaction::types::{EventWrapper, MaxArraySize, Transaction};
 

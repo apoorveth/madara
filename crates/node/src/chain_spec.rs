@@ -1,4 +1,5 @@
 use blockifier::execution::contract_class::ContractClass;
+use madara_runtime::{AuraConfig, EnableManualSeal, GrandpaConfig, RuntimeGenesisConfig, SystemConfig, WASM_BINARY};
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use pallet_starknet::types::ContractStorageKeyWrapper;
 use sc_service::ChainType;
@@ -185,19 +186,19 @@ fn testnet_genesis(
     let fee_token_class_hash = Felt252Wrapper::from_hex_be(FEE_TOKEN_CLASS_HASH).unwrap();
 
     // ERC20 CONTRACT
-    let erc20_class: ContractClassV0Wrapper =
+    let erc20_class: ContractClassWrapper =
         get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC20.json")).try_into().unwrap();
     let token_class_hash = Felt252Wrapper::from_hex_be(ERC20_CLASS_HASH).unwrap();
     let token_contract_address = Felt252Wrapper::from_hex_be(ERC20_ADDRESS).unwrap();
 
     // ERC721 CONTRACT
-    let erc721_class: ContractClassV0Wrapper =
+    let erc721_class: ContractClassWrapper =
         get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC721.json")).try_into().unwrap();
     let nft_class_hash = Felt252Wrapper::from_hex_be(ERC721_CLASS_HASH).unwrap();
     let nft_contract_address = Felt252Wrapper::from_hex_be(ERC721_ADDRESS).unwrap();
 
     // UDC CONTRACT
-    let udc_class: ContractClassV0Wrapper =
+    let udc_class: ContractClassWrapper =
         get_contract_class(include_bytes!("../../../cairo-contracts/build/UniversalDeployer.json")).try_into().unwrap();
     let udc_class_hash = Felt252Wrapper::from_hex_be(UDC_CLASS_HASH).unwrap();
     let udc_contract_address = Felt252Wrapper::from_hex_be(UDC_CONTRACT_ADDRESS).unwrap();
