@@ -24,7 +24,11 @@ fn given_contract_l1_message_fails_sender_not_deployed() {
         let transaction = DeclareTransaction {
             sender_address: contract_address,
             contract_class: erc20_class,
-            ..DeclareTransaction::default()
+            compiled_class_hash: Default::default(),
+            version: Default::default(),
+            nonce: Default::default(),
+            signature: Default::default(),
+            max_fee: Default::default(),
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);

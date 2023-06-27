@@ -15,7 +15,7 @@ use crate::crypto::hash::pedersen::PedersenHasher;
 use crate::crypto::hash::{hash, Hasher};
 use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, Node};
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
-use crate::execution::contract_class_wrapper::ContractClassWrapper;
+use crate::execution::contract_class_wrapper::{ContractClassV0Wrapper, ContractClassWrapper};
 use crate::execution::types::Felt252Wrapper;
 use crate::tests::utils::PEDERSEN_ZERO_HASH;
 use crate::traits::hash::{CryptoHasherT, HasherT};
@@ -60,7 +60,7 @@ fn test_declare_tx_hash() {
         signature: bounded_vec!(),
         max_fee: Felt252Wrapper::ONE,
         compiled_class_hash: Felt252Wrapper::THREE,
-        contract_class: ContractClassWrapper::default(),
+        contract_class: ContractClassWrapper::V0(ContractClassV0Wrapper::default()),
     };
     assert_eq!(calculate_declare_tx_hash(transaction, chain_id), expected_tx_hash);
 }

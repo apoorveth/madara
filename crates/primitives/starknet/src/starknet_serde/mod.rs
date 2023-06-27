@@ -9,8 +9,9 @@ use serde::{Deserialize, Serialize};
 use sp_core::U256;
 use thiserror_no_std::Error;
 
+use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::types::{
-    CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
+    CallEntryPointWrapper, ContractClassV0Wrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
     MaxCalldataSize,
 };
 use crate::transaction::types::{EventWrapper, MaxArraySize, Transaction};
@@ -343,18 +344,26 @@ pub fn transaction_from_json(
     let mut transaction = Transaction::try_from(deserialized_transaction)?;
 
     // Set the contract_class field based on contract_content
-    if !contract_content.is_empty() {
-        // FIXME 707
-        let raw_contract_class: ContractClass =
-            ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
-                DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e))
+    if contract_content.is_empty() {
+        transaction.contract_class = None;
+    } else {
+        let raw_contract_class: ContractClass;
+        if transaction.version == 1 {
+            raw_contract_class = ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
+                DeserializeTransactionError::FailedToParse(format!("invalid contract content for V0: {:?}", e))
             })?);
+        } else if transaction.version == 2 {
+            raw_contract_class = ContractClass::V1(serde_json::from_slice(contract_content).map_err(|e| {
+                DeserializeTransactionError::FailedToParse(format!("invalid contract content for V1: {:?}", e))
+            })?);
+        } else {
+            unimplemented!("version {} is not supported", transaction.version);
+        }
+
         transaction.contract_class =
             Some(ContractClassWrapper::try_from(raw_contract_class).map_err(|e| {
                 DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e))
             })?);
-    } else {
-        transaction.contract_class = None;
     }
 
     Ok(transaction)

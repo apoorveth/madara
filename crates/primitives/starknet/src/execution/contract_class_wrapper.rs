@@ -4,7 +4,10 @@ use alloc::vec::Vec;
 use alloc::{format, vec};
 use core::mem;
 
-use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV0Inner};
+use blockifier::execution::contract_class::{
+    ContractClass, ContractClassV0, ContractClassV0Inner, ContractClassV1, ContractClassV1Inner, EntryPointV1,
+};
+use cairo_lang_casm::hints::Hint;
 use cairo_vm::felt::Felt252;
 use cairo_vm::serde::deserialize_program::{
     deserialize_program_json, parse_program, parse_program_json, BuiltinName, ProgramJson,
@@ -16,7 +19,7 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::stdlib::collections::HashMap;
 
-use super::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper};
+use super::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointV0Wrapper, EntryPointV1Wrapper};
 use crate::alloc::string::ToString;
 use crate::scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen, Output};
 use crate::scale_info::build::Fields;
@@ -44,58 +47,37 @@ impl<'de> Deserialize<'de> for ProgramWrapper {
 
 /// [ContractClass] type equivalent. This is not really a wrapper it's more of a copy where we
 /// implement the substrate necessary traits.
+
+#[derive(Clone, Debug, PartialEq, Eq, TypeInfo, Encode, Decode, Serialize, Deserialize)]
+pub enum ContractClassWrapper {
+    V0(ContractClassV0Wrapper),
+    V1(ContractClassV1Wrapper),
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, TypeInfo, Default, Encode, Decode, Serialize, Deserialize)]
-pub struct ContractClassWrapper {
+pub struct ContractClassV0Wrapper {
     /// Wrapper type for a [Program] object. (It's not really a wrapper it's a copy of the type but
     /// we implement the necessary traits.)
     pub program: ProgramWrapper,
     /// Wrapper type for a [HashMap<String, EntryPoint>] object. (It's not really a wrapper it's a
     /// copy of the type but we implement the necessary traits.)
-    pub entry_points_by_type: EntrypointMapWrapper,
+    pub entry_points_by_type: EntrypointMapV0Wrapper,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, TypeInfo, Default, Encode, Decode, Serialize, Deserialize)]
+pub struct ContractClassV1Wrapper {
+    /// Wrapper type for a [Program] object. (It's not really a wrapper it's a copy of the type but
+    /// we implement the necessary traits.)
+    pub program: ProgramWrapper,
+    /// Wrapper type for a [HashMap<String, EntryPoint>] object. (It's not really a wrapper it's a
+    /// copy of the type but we implement the necessary traits.)
+    pub entry_points_by_type: EntrypointMapV1Wrapper,
+    pub hints: HintsMapWrapper,
 }
 
 impl ContractClassWrapper {
     // This is the maximum size of a contract in starknet. https://docs.starknet.io/documentation/starknet_versions/limits_and_triggers/
     const MAX_CONTRACT_BYTE_SIZE: usize = 20971520;
-}
-
-impl From<ContractClassWrapper> for ContractClass {
-    fn from(value: ContractClassWrapper) -> Self {
-        // FIXME 707
-        Self::V0(ContractClassV0(
-            ContractClassV0Inner {
-                program: value.program.into(),
-                // Convert EntrypointMapWrapper to HashMap<EntryPointType, Vec<EntryPoint>>
-                entry_points_by_type: HashMap::from_iter(value.entry_points_by_type.0.iter().clone().map(
-                    |(entrypoint_type, entrypoints)| {
-                        (
-                            entrypoint_type.clone().into(),
-                            entrypoints.clone().into_iter().map(|val| val.into()).collect(),
-                        )
-                    },
-                )),
-            }
-            .into(),
-        ))
-    }
-}
-
-impl From<ContractClass> for ContractClassWrapper {
-    fn from(value: ContractClass) -> Self {
-        // FIXME 707
-        match value {
-            ContractClass::V0(class) => Self {
-                program: class.program.clone().into(),
-                entry_points_by_type: EntrypointMapWrapper(unsafe {
-                    mem::transmute::<
-                        HashMap<EntryPointType, Vec<EntryPoint>>,
-                        HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>,
-                    >(class.entry_points_by_type.clone())
-                }),
-            },
-            _ => Self::default(),
-        }
-    }
 }
 
 impl MaxEncodedLen for ContractClassWrapper {
@@ -105,45 +87,151 @@ impl MaxEncodedLen for ContractClassWrapper {
     }
 }
 
+impl From<ContractClassWrapper> for ContractClass {
+    fn from(value: ContractClassWrapper) -> Self {
+        match value {
+            ContractClassWrapper::V0(class) => Self::V0(ContractClassV0(
+                ContractClassV0Inner {
+                    program: class.program.into(),
+                    // Convert EntrypointMapWrapper to HashMap<EntryPointType, Vec<EntryPoint>>
+                    entry_points_by_type: HashMap::from_iter(class.entry_points_by_type.0.iter().clone().map(
+                        |(entrypoint_type, entrypoints)| {
+                            (
+                                entrypoint_type.clone().into(),
+                                entrypoints.clone().into_iter().map(|val| val.into()).collect(),
+                            )
+                        },
+                    )),
+                }
+                .into(),
+            )),
+            ContractClassWrapper::V1(class) => Self::V1(ContractClassV1(
+                ContractClassV1Inner {
+                    program: class.program.into(),
+                    // Convert EntrypointMapWrapper to HashMap<EntryPointType, Vec<EntryPoint>>
+                    entry_points_by_type: HashMap::from_iter(class.entry_points_by_type.0.iter().clone().map(
+                        |(entrypoint_type, entrypoints)| {
+                            (
+                                entrypoint_type.clone().into(),
+                                entrypoints.clone().into_iter().map(|val| val.into()).collect(),
+                            )
+                        },
+                    )),
+                    hints: class.hints.0.clone(),
+                }
+                .into(),
+            )),
+        }
+    }
+}
+
+impl From<ContractClass> for ContractClassWrapper {
+    fn from(value: ContractClass) -> Self {
+        match value {
+            ContractClass::V0(class) => Self::V0(ContractClassV0Wrapper {
+                program: class.program.clone().into(),
+                entry_points_by_type: EntrypointMapV0Wrapper(unsafe {
+                    mem::transmute::<
+                        HashMap<EntryPointType, Vec<EntryPoint>>,
+                        HashMap<EntryPointTypeWrapper, Vec<EntryPointV0Wrapper>>,
+                    >(class.entry_points_by_type.clone())
+                }),
+            }),
+            ContractClass::V1(class) => Self::V1(ContractClassV1Wrapper {
+                program: class.program.clone().into(),
+                entry_points_by_type: EntrypointMapV1Wrapper(unsafe {
+                    mem::transmute::<
+                        HashMap<EntryPointType, Vec<EntryPointV1>>,
+                        HashMap<EntryPointTypeWrapper, Vec<EntryPointV1Wrapper>>,
+                    >(class.entry_points_by_type.clone())
+                }),
+                hints: class.hints.clone().into(),
+            }),
+        }
+    }
+}
+
 /// Wrapper type for a [HashMap<String, EntryPoint>] object. (It's not really a wrapper it's a
 /// copy of the type but we implement the necessary traits.)
 #[derive(Clone, Debug, PartialEq, Eq, Default, Constructor, Serialize, Deserialize)]
-pub struct EntrypointMapWrapper(pub HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>);
+pub struct EntrypointMapV0Wrapper(pub HashMap<EntryPointTypeWrapper, Vec<EntryPointV0Wrapper>>);
 
 /// SCALE trait.
-impl Encode for EntrypointMapWrapper {
+impl Encode for EntrypointMapV0Wrapper {
     fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
-        // Convert the EntrypointMapWrapper to Vec<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> to be
-        // able to use the Encode trait from this type. We implemented it for EntryPointWrapper, derived it
-        // for EntryPointTypeWrapper so we can use it for Vec<(EntryPointTypeWrapper,
-        // Vec<EntryPointWrapper>)>.
-        let val: Vec<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> = self.0.clone().into_iter().collect();
+        // Convert the EntrypointMapV0Wrapper to Vec<(EntryPointTypeWrapper, Vec<EntryPointV0Wrapper>)> to
+        // be able to use the Encode trait from this type. We implemented it for
+        // EntryPointV0Wrapper, derived it for EntryPointTypeWrapper so we can use it for
+        // Vec<(EntryPointTypeWrapper, Vec<EntryPointV0Wrapper>)>.
+        let val: Vec<(EntryPointTypeWrapper, Vec<EntryPointV0Wrapper>)> = self.0.clone().into_iter().collect();
         dest.write(&Encode::encode(&val));
     }
 }
 /// SCALE trait.
-impl Decode for EntrypointMapWrapper {
+impl Decode for EntrypointMapV0Wrapper {
     fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
-        // Convert the EntrypointMapWrapper to Vec<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> to be
-        // able to use the Decode trait from this type. We implemented it for EntryPointWrapper, derived it
-        // for EntryPointTypeWrapper so we can use it for Vec<(EntryPointTypeWrapper,
-        // Vec<EntryPointWrapper>)>.
-        let val: Vec<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> =
+        // Convert the EntrypointMapV0Wrapper to Vec<(EntryPointTypeWrapper, Vec<EntryPointV0Wrapper>)> to
+        // be able to use the Decode trait from this type. We implemented it for
+        // EntryPointV0Wrapper, derived it for EntryPointTypeWrapper so we can use it for
+        // Vec<(EntryPointTypeWrapper, Vec<EntryPointV0Wrapper>)>.
+        let val: Vec<(EntryPointTypeWrapper, Vec<EntryPointV0Wrapper>)> =
             Decode::decode(input).map_err(|_| Error::from("Can't get EntrypointMap from input buffer."))?;
-        Ok(EntrypointMapWrapper(HashMap::from_iter(val.into_iter())))
+        Ok(EntrypointMapV0Wrapper(HashMap::from_iter(val.into_iter())))
     }
 }
 
 /// SCALE trait.
-impl TypeInfo for EntrypointMapWrapper {
+impl TypeInfo for EntrypointMapV0Wrapper {
     type Identity = Self;
 
     // The type info is saying that the EntryPointByType must be seen as an
     // array of bytes.
     fn type_info() -> Type {
         Type::builder()
-            .path(Path::new("EntrypointMapWrapper", module_path!()))
-            .composite(Fields::unnamed().field(|f| f.ty::<[u8]>().type_name("EntrypointMap")))
+            .path(Path::new("EntrypointMapV0Wrapper", module_path!()))
+            .composite(Fields::unnamed().field(|f| f.ty::<[u8]>().type_name("EntrypointMapV0")))
+    }
+}
+
+/// Wrapper type for a [HashMap<String, EntryPointV1>] object. (It's not really a wrapper it's a
+/// copy of the type but we implement the necessary traits.)
+#[derive(Clone, Debug, PartialEq, Eq, Default, Constructor, Serialize, Deserialize)]
+pub struct EntrypointMapV1Wrapper(pub HashMap<EntryPointTypeWrapper, Vec<EntryPointV1Wrapper>>);
+
+/// SCALE trait.
+impl Encode for EntrypointMapV1Wrapper {
+    fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+        // Convert the EntrypointMapV1Wrapper to Vec<(EntryPointTypeWrapper, Vec<EntryPointV1Wrapper>)> to
+        // be able to use the Encode trait from this type. We implemented it for
+        // EntryPointV1Wrapper, derived it for EntryPointTypeWrapper so we can use it for
+        // Vec<(EntryPointTypeWrapper, Vec<EntryPointV1Wrapper>)>.
+        let val: Vec<(EntryPointTypeWrapper, Vec<EntryPointV1Wrapper>)> = self.0.clone().into_iter().collect();
+        dest.write(&Encode::encode(&val));
+    }
+}
+/// SCALE trait.
+impl Decode for EntrypointMapV1Wrapper {
+    fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+        // Convert the EntrypointMapV1Wrapper to Vec<(EntryPointTypeWrapper, Vec<EntryPointV1Wrapper>)> to
+        // be able to use the Decode trait from this type. We implemented it for
+        // EntryPointV1Wrapper, derived it for EntryPointTypeWrapper so we can use it for
+        // Vec<(EntryPointTypeWrapper, Vec<EntryPointV1Wrapper>)>.
+        let val: Vec<(EntryPointTypeWrapper, Vec<EntryPointV1Wrapper>)> =
+            Decode::decode(input).map_err(|_| Error::from("Can't get EntrypointMap from input buffer."))?;
+        Ok(EntrypointMapV1Wrapper(HashMap::from_iter(val.into_iter())))
+    }
+}
+
+/// SCALE trait.
+impl TypeInfo for EntrypointMapV1Wrapper {
+    type Identity = Self;
+
+    // The type info is saying that the EntryPointByType must be seen as an
+    // array of bytes.
+    fn type_info() -> Type {
+        Type::builder()
+            .path(Path::new("EntrypointMapV1Wrapper", module_path!()))
+            .composite(Fields::unnamed().field(|f| f.ty::<[u8]>().type_name("EntrypointMapV1")))
     }
 }
 
@@ -259,6 +347,59 @@ impl TypeInfo for ProgramWrapper {
     }
 }
 
+/// Wrapper type for a [Hint] object. (It's not really a wrapper it's a copy of the type but
+/// we implement the necessary traits.)
+#[derive(Clone, Debug, PartialEq, Eq, Default, Constructor, Serialize, Deserialize)]
+pub struct HintsMapWrapper(pub HashMap<String, Hint>);
+
+/// SCALE trait.
+impl Encode for HintsMapWrapper {
+    fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+        // Convert the HintsMapWrapper to Vec<(String, Vec<Hint>)> to be
+        // able to use the Encode trait from this type. We derived it for Hint,
+        // so we can use it for Vec<(String,Vec<Hint>)>.
+        let val: Vec<(String, Hint)> = self.0.clone().into_iter().collect();
+        dest.write(&Encode::encode(&val));
+    }
+}
+
+/// SCALE trait.
+impl Decode for HintsMapWrapper {
+    fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+        // Convert the HintsMapWrapper to Vec<(String, Hint)> to be
+        // able to use the Decode trait from this type. We derived it for Hint,
+        // so we can use it for Vec<(String,Hint)>.
+        let val: Vec<(String, Hint)> =
+            Decode::decode(input).map_err(|_| Error::from("Can't get HintsMap from input buffer."))?;
+        Ok(HintsMapWrapper(HashMap::from_iter(val.into_iter())))
+    }
+}
+
+/// SCALE trait.
+impl TypeInfo for HintsMapWrapper {
+    type Identity = Self;
+
+    // The type info is saying that the HintsMapWrapper must be seen as an
+    // array of bytes.
+    fn type_info() -> Type {
+        Type::builder()
+            .path(Path::new("HintsMapWrapper", module_path!()))
+            .composite(Fields::unnamed().field(|f| f.ty::<[u8]>().type_name("HintsMap")))
+    }
+}
+
+impl From<HashMap<String, Hint>> for HintsMapWrapper {
+    fn from(value: HashMap<String, Hint>) -> Self {
+        Self(value)
+    }
+}
+
+impl From<HintsMapWrapper> for HashMap<String, Hint> {
+    fn from(value: HintsMapWrapper) -> Self {
+        value.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use blockifier::execution::contract_class::ContractClass;
@@ -272,11 +413,11 @@ mod tests {
 
     #[test]
     fn test_serialize_deserialize_contract_class() {
-        let contract_class: ContractClassWrapper =
+        let contract_class: ContractClassV0Wrapper =
             serde_json::from_slice(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json"))
                 .unwrap();
         let contract_class_serialized = serde_json::to_vec(&contract_class).unwrap();
-        let contract_class_deserialized: ContractClassWrapper =
+        let contract_class_deserialized: ContractClassV0Wrapper =
             serde_json::from_slice(&contract_class_serialized).unwrap();
 
         pretty_assertions::assert_eq!(contract_class, contract_class_deserialized);

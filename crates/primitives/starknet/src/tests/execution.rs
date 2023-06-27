@@ -15,8 +15,8 @@ use starknet_api::transaction::Calldata;
 use starknet_api::{patricia_key, stark_felt};
 
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
-use crate::execution::contract_class_wrapper::{ContractClassWrapper, EntrypointMapWrapper, ProgramWrapper};
-use crate::execution::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper};
+use crate::execution::contract_class_wrapper::{ContractClassV0Wrapper, EntrypointMapV0Wrapper, ProgramWrapper};
+use crate::execution::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointV0Wrapper};
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::tests::utils::{create_test_state, TEST_CLASS_HASH, TEST_CONTRACT_ADDRESS};
 
@@ -155,11 +155,11 @@ fn test_contract_class_wrapper_try_from_contract_class() {
     "attributes": []
 	}
 }"#;
-    let contract_class_wrapper: ContractClassWrapper = serde_json::from_str(json_content).unwrap();
-    let mut expected_entrypoints = <HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>>::new();
+    let contract_class_wrapper: ContractClassV0Wrapper = serde_json::from_str(json_content).unwrap();
+    let mut expected_entrypoints = <HashMap<EntryPointTypeWrapper, Vec<EntryPointV0Wrapper>>>::new();
     expected_entrypoints.insert(
         EntryPointTypeWrapper::External,
-        vec![EntryPointWrapper::from(EntryPoint {
+        vec![EntryPointV0Wrapper::from(EntryPoint {
             offset: EntryPointOffset(0x16e),
             selector: EntryPointSelector(StarkFelt(
                 <[u8; 32]>::from_hex("00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588").unwrap(),
@@ -168,7 +168,7 @@ fn test_contract_class_wrapper_try_from_contract_class() {
     );
     expected_entrypoints.insert(
         EntryPointTypeWrapper::Constructor,
-        vec![EntryPointWrapper::from(EntryPoint {
+        vec![EntryPointV0Wrapper::from(EntryPoint {
             offset: EntryPointOffset(0x147),
             selector: EntryPointSelector(StarkFelt(
                 <[u8; 32]>::from_hex("028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194").unwrap(),
@@ -181,9 +181,9 @@ fn test_contract_class_wrapper_try_from_contract_class() {
         main_scope: "__main__".to_string(),
         ..ProgramWrapper::default()
     };
-    let expected_contract_class_wrapper = ContractClassWrapper {
+    let expected_contract_class_wrapper = ContractClassV0Wrapper {
         program: program_wrapper,
-        entry_points_by_type: EntrypointMapWrapper(expected_entrypoints),
+        entry_points_by_type: EntrypointMapV0Wrapper(expected_entrypoints),
     };
 
     pretty_assertions::assert_eq!(contract_class_wrapper, expected_contract_class_wrapper);

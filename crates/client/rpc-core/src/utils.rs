@@ -3,7 +3,7 @@ use cairo_vm::types::program::Program;
 use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{
-    ContractClassWrapper, EntryPointTypeWrapper, EntrypointMapWrapper, Felt252Wrapper,
+    ContractClassV0Wrapper, EntryPointTypeWrapper, EntrypointMapV0Wrapper, Felt252Wrapper,
 };
 use mp_starknet::transaction::types::{
     BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
@@ -17,7 +17,7 @@ use starknet_core::types::{
 };
 
 /// Returns a [`ContractClass`] from a [`ContractClassWrapper`]
-pub fn to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
+pub fn to_rpc_contract_class(contract_class_wrapped: ContractClassV0Wrapper) -> Result<ContractClass> {
     let entry_points_by_type = to_legacy_entry_points_by_type(&contract_class_wrapped.entry_points_by_type)?;
 
     let program: Program =
@@ -72,9 +72,9 @@ pub fn to_tx(
 
 /// Returns a [Result<LegacyEntryPointsByType>] (blockifier type) from a [EntrypointMapWrapper]
 /// (internal type)
-fn to_legacy_entry_points_by_type(entries: &EntrypointMapWrapper) -> Result<LegacyEntryPointsByType> {
+fn to_legacy_entry_points_by_type(entries: &EntrypointMapV0Wrapper) -> Result<LegacyEntryPointsByType> {
     fn collect_entry_points(
-        entries: &EntrypointMapWrapper,
+        entries: &EntrypointMapV0Wrapper,
         entry_point_type: EntryPointTypeWrapper,
     ) -> Result<Vec<LegacyContractEntryPoint>> {
         Ok(entries
