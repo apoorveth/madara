@@ -823,7 +823,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 [[package]]
 name = "blockifier"
 version = "0.1.0"
-source = "git+https://github.com/apoorvsadana/blockifier?branch=no_std-support#87461f0ffcb136492ca834ab8df8ab3abd8832aa"
+source = "git+https://github.com/keep-starknet-strange/blockifier?branch=no_std-support#809b204745bbabb6edd3457084def1fd5e1de6ea"
 dependencies = [
  "cairo-felt",
  "cairo-lang-casm",
@@ -939,12 +939,13 @@ dependencies = [
 [[package]]
 name = "cairo-felt"
 version = "0.6.0"
-source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#441a3285fa473b9d41782ab62b16ae9f1824e502"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#3f406f4a335fd3a0bf22237e493be5a9947efa7d"
 dependencies = [
  "lazy_static",
  "num-bigint 0.4.3",
  "num-integer",
  "num-traits 0.2.15",
+ "parity-scale-codec",
  "serde",
 ]
 
@@ -1370,7 +1371,7 @@ dependencies = [
 [[package]]
 name = "cairo-take_until_unbalanced"
 version = "0.29.0"
-source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#441a3285fa473b9d41782ab62b16ae9f1824e502"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#3f406f4a335fd3a0bf22237e493be5a9947efa7d"
 dependencies = [
  "nom",
 ]
@@ -1378,7 +1379,7 @@ dependencies = [
 [[package]]
 name = "cairo-vm"
 version = "0.6.0"
-source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#441a3285fa473b9d41782ab62b16ae9f1824e502"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#3f406f4a335fd3a0bf22237e493be5a9947efa7d"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -1399,6 +1400,7 @@ dependencies = [
  "num-integer",
  "num-prime",
  "num-traits 0.2.15",
+ "parity-scale-codec",
  "rand 0.8.5",
  "rand_core 0.6.4",
  "serde",
@@ -6049,9 +6051,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.5.0"
+version = "3.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ddb756ca205bd108aee3c62c6d3c994e1df84a59b9d6d4a5ea42ee1fd5a9a28"
+checksum = "2287753623c76f953acd29d15d8100bcab84d29db78fb6f352adb3c53e83b967"
 dependencies = [
  "arrayvec 0.7.2",
  "bitvec 1.0.1",
@@ -6064,9 +6066,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec-derive"
-version = "3.1.4"
+version = "3.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86b26a931f824dd4eca30b3e43bb4f31cd5f0d3a403c5f5ff27106b805bfde7b"
+checksum = "2b6937b5e67bfba3351b87b040d48352a2fcb6ad72f81855412ce97b45c8f110"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -9649,7 +9651,7 @@ dependencies = [
 [[package]]
 name = "starknet_api"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/starknet-api?branch=no_std-support#05c00f2d17be4410f792ef3920076fea00a25b65"
+source = "git+https://github.com/keep-starknet-strange/starknet-api?branch=no_std-support#6a48e7c8636685b80515c6ab666c1ae9d01278a2"
 dependencies = [
  "cairo-lang-casm-contract-class",
  "derive_more",
@@ -9657,6 +9659,7 @@ dependencies = [
  "hex",
  "indexmap 2.0.0-pre",
  "once_cell",
+ "parity-scale-codec",
  "primitive-types",
  "serde",
  "serde_json",
