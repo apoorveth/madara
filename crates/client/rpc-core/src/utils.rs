@@ -98,7 +98,7 @@ pub fn to_tx(
     }
 }
 
-/// Returns a [Result<LegacyEntryPointsByType>] (blockifier type) from a [EntrypointMapWrapper]
+/// Returns a [Result<LegacyEntryPointsByType>] (blockifier type) from a [EntrypointMapV0Wrapper]
 /// (internal type)
 fn to_legacy_entry_points_by_type(entries: &EntrypointMapV0Wrapper) -> Result<LegacyEntryPointsByType> {
     fn collect_entry_points(
