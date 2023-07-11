@@ -6,20 +6,6 @@ use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
 use crate::{chain_spec, service};
 
-fn copy_chain_spec(madara_path: String) {
-    let mut src = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    src.push("chain-specs");
-    let mut dst = std::path::PathBuf::from(madara_path);
-    dst.push("chain-specs");
-    std::fs::create_dir_all(&dst).unwrap();
-    for file in std::fs::read_dir(src).unwrap() {
-        let file = file.unwrap();
-        let mut dst = dst.clone();
-        dst.push(file.file_name());
-        std::fs::copy(file.path(), dst).unwrap();
-    }
-}
-
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
         "Substrate Node".into()
