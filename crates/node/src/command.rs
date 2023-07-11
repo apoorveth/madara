@@ -184,8 +184,6 @@ pub fn run() -> sc_cli::Result<()> {
                 cli.run.run_cmd.shared_params.base_path = Some((madara_path.clone()).into());
 
                 if cli.run.testnet.is_some() {
-                    copy_chain_spec(madara_path.clone());
-
                     match cli.run.testnet {
                         Some(Testnet::Local) => {
                             cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/local-raw.json");
