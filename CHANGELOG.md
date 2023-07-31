@@ -8,6 +8,8 @@
 - fix: correct value of compiled_class_hash in RPCTransaction
 - ci: scope cache by branch and add cache cleanup
 - feat: bump starknet-core to 0.6.0 and remove InvokeV0
+- test: add `starknet-rpc-test` crate to the workspace
+- test(rpc): add `get_block_number.rs` tests
 
 ## v0.2.0
 
