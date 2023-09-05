@@ -14,7 +14,7 @@ use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS,
 };
 use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::AccountActions;
+use starknet_rpc_test::utils::{create_account, AccountActions};
 use starknet_rpc_test::{MadaraClient, Transaction};
 use starknet_signers::{LocalWallet, SigningKey};
 
@@ -81,13 +81,11 @@ async fn work_ok_account_with_tx(#[future] madara: MadaraClient) -> Result<(), a
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
-    let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(SIGNER_PRIVATE).unwrap()));
-    let argent_account_address = FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).expect("Invalid Contract Address");
-    let account = SingleOwnerAccount::new(rpc, signer, argent_account_address, chain_id::TESTNET);
+    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
     madara
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
-            argent_account_address,
+            FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(),
             FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
             None,
         ))])

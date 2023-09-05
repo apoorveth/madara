@@ -15,9 +15,9 @@ starknet-ff = {workspace = true}
 starknet-core = {workspace = true}
 starknet-crypto = {workspace = true}
 starknet-providers = {workspace = true}
-starknet-signers = {version = "^0.3.0"}
-starknet-accounts = {version = "^0.4.0"}
-starknet-contract = {version = "^0.4.0"}
+starknet-signers = {version = "^0.4.0"}
+starknet-accounts = {version = "^0.5.0"}
+starknet-contract = {version = "^0.5.0"}
 url = "2.2.2"
 tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
 lazy_static = "1.4.0"
@@ -72,3 +72,7 @@ path = "get_block_with_tx_hashes.rs"
 [[test]]
 name = "starknet_get_block_with_txs"
 path = "get_block_with_txs.rs"
+
+[[test]]
+name = "starknet_add_invoke_transaction"
+path = "add_invoke_transaction.rs"
