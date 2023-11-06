@@ -2,7 +2,7 @@ FROM rust:slim-buster as builder
 RUN apt-get -y update; \
     apt-get install -y --no-install-recommends \
         libssl-dev make clang-11 g++ llvm protobuf-compiler \
-        pkg-config libz-dev zstd git; \
+        pkg-config libz-dev zstd git libprotobuf-dev; \
     apt-get autoremove -y; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
@@ -36,4 +36,5 @@ HEALTHCHECK --interval=10s --timeout=30s --start-period=10s --retries=10 \
 # 9615 Prometheus exporter
 # 30333 P2P communication
 EXPOSE 9944 9615 30333
-ENTRYPOINT ["/madara-bin"]
+RUN /madara-bin setup --chain=kakarot --base-path=/.madara
+ENTRYPOINT ["/madara-bin", "--chain=kakarot", "--base-path=/.madara", "--force-authoring","--alice","--rpc-external","--rpc-methods=unsafe"]
