@@ -226,6 +226,13 @@ pub mod pallet {
     #[pallet::getter(fn pending_hashes)]
     pub(super) type PendingHashes<T: Config> = StorageValue<_, Vec<TransactionHash>, ValueQuery>;
 
+    // Keeps track of transactions which have not been validated
+    // These tranactions are revalidated in pre_dispatch
+    #[pallet::storage]
+    #[pallet::unbounded]
+    #[pallet::getter(fn revalidate_hashes)]
+    pub(super) type RevalidateHashes<T: Config> = StorageMap<_, Identity, TransactionHash, bool, OptionQuery>;
+
     #[pallet::storage]
     #[pallet::unbounded]
     #[pallet::getter(fn tx_events)]
@@ -480,6 +487,12 @@ pub mod pallet {
 
             let input_transaction = transaction;
 
+            log::info!(
+                "invoking txn with sender: {:?} and nonce: {:?}",
+                input_transaction.sender_address(),
+                input_transaction.nonce()
+            );
+
             let chain_id = Self::chain_id();
             let transaction = input_transaction.into_executable::<T::SystemHash>(chain_id, false);
 
@@ -612,7 +625,7 @@ pub mod pallet {
                     T::DisableNonceValidation::get(),
                 )
                 .map_err(|e| {
-                    log::error!("failed to deploy accout: {:?}", e);
+                    log::error!("failed to deploy account: {:?}", e);
                     Error::<T>::TransactionExecutionFailed
                 })?;
 
@@ -736,7 +749,7 @@ pub mod pallet {
             let transaction = Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call)?;
 
             // Check the nonce is correct
-            let (sender_address, sender_nonce, transaction_nonce) =
+            let (sender_address, sender_nonce, transaction_nonce, transaction_hash) =
                 if let UserAndL1HandlerTransaction::User(ref transaction) = transaction {
                     let sender_address: ContractAddress = transaction.sender_address().into();
                     let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
@@ -762,11 +775,45 @@ pub mod pallet {
                         }
                     };
 
-                    (transaction.sender_address(), sender_nonce, transaction_nonce.cloned())
+                    (
+                        transaction.sender_address(),
+                        sender_nonce,
+                        transaction_nonce.cloned(),
+                        transaction.compute_hash::<T::SystemHash>(T::ChainId::get(), false),
+                    )
                 } else {
                     // TODO: create and check L1 messages Nonce
                     unimplemented!()
                 };
+
+            log::info!("About to validate txn {:?}", transaction_hash);
+
+            let nonce_for_priority: u64 = transaction_nonce
+                .unwrap_or(Felt252Wrapper::ZERO)
+                .try_into()
+                .map_err(|_| InvalidTransaction::Custom(NONCE_DECODE_FAILURE))?;
+
+            let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
+                .priority(u64::MAX - nonce_for_priority)
+                .longevity(T::TransactionLongevity::get())
+                .propagate(true);
+
+            if let Some(transaction_nonce) = transaction_nonce {
+                valid_transaction_builder = valid_transaction_builder.and_provides((sender_address, transaction_nonce));
+                // Enforce waiting for the tx with the previous nonce,
+                // to be either executed or ordered before in the block
+                if transaction_nonce > sender_nonce {
+                    log::info!("Skipping validation for txn {:?}", transaction_hash);
+                    RevalidateHashes::<T>::insert(TransactionHash(transaction_hash.into()), true);
+                    log::info!(
+                        "RevalidateHashes contains key: {:?}",
+                        RevalidateHashes::<T>::iter_keys().collect::<Vec<TransactionHash>>()
+                    );
+                    return valid_transaction_builder
+                        .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)))
+                        .build();
+                }
+            }
 
             // Validate the user transactions
             if let UserAndL1HandlerTransaction::User(transaction) = transaction {
@@ -786,29 +833,9 @@ pub mod pallet {
                     ),
                 }
                 .map_err(|e| {
-                    log::error!("failed to validate tx: {}", e);
+                    log::error!("failed to validate tx: {:?}", e);
                     InvalidTransaction::BadProof
                 })?;
-            }
-
-            let nonce_for_priority: u64 = transaction_nonce
-                .unwrap_or(Felt252Wrapper::ZERO)
-                .try_into()
-                .map_err(|_| InvalidTransaction::Custom(NONCE_DECODE_FAILURE))?;
-
-            let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
-                .priority(u64::MAX - nonce_for_priority)
-                .longevity(T::TransactionLongevity::get())
-                .propagate(true);
-
-            if let Some(transaction_nonce) = transaction_nonce {
-                valid_transaction_builder = valid_transaction_builder.and_provides((sender_address, transaction_nonce));
-                // Enforce waiting for the tx with the previous nonce,
-                // to be either executed or ordered before in the block
-                if transaction_nonce > sender_nonce {
-                    valid_transaction_builder = valid_transaction_builder
-                        .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
-                }
             }
 
             valid_transaction_builder.build()
@@ -824,7 +851,18 @@ pub mod pallet {
         /// this function calls the validate_unsigned function in order to verify validity
         /// before dispatch. In our case, since transaction was already validated in
         /// `validate_unsigned` we can just return Ok.
-        fn pre_dispatch(_call: &Self::Call) -> Result<(), TransactionValidityError> {
+        fn pre_dispatch(call: &Self::Call) -> Result<(), TransactionValidityError> {
+            // get current timestamp
+            let transaction = match Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call) {
+                Ok(transaction) => transaction,
+                Err(_) => return Ok(()),
+            };
+
+            if let UserAndL1HandlerTransaction::User(transaction) = transaction {
+                log::info!("re validating transaction {:?}", transaction.nonce());
+                Self::validate_unsigned(TransactionSource::InBlock, call)?;
+            }
+
             Ok(())
         }
     }

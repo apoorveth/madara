@@ -1,8 +1,10 @@
 use alloc::vec::Vec;
 
 use mp_felt::Felt252Wrapper;
+use mp_hashers::HasherT;
 
 use super::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, UserTransaction};
+use crate::compute_hash::ComputeTransactionHash;
 
 impl Transaction {
     pub fn signature(&self) -> Vec<Felt252Wrapper> {
@@ -61,6 +63,14 @@ impl UserTransaction {
             UserTransaction::Declare(tx, _) => tx.version(),
             UserTransaction::DeployAccount(tx) => tx.version(),
             UserTransaction::Invoke(tx) => tx.version(),
+        }
+    }
+
+    pub fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
+        match self {
+            UserTransaction::Declare(tx, _) => tx.compute_hash::<H>(chain_id, is_query),
+            UserTransaction::DeployAccount(tx) => tx.compute_hash::<H>(chain_id, is_query),
+            UserTransaction::Invoke(tx) => tx.compute_hash::<H>(chain_id, is_query),
         }
     }
 }
