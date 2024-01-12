@@ -11,6 +11,7 @@ use futures::future::BoxFuture;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
+use mc_block_proposer::ProposerFactory;
 use mc_commitment_state_diff::CommitmentStateDiffWorker;
 use mc_data_availability::avail::config::AvailConfig;
 use mc_data_availability::avail::AvailClient;
@@ -30,7 +31,6 @@ use mp_sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
 use prometheus_endpoint::Registry;
-use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
 use sc_consensus::BasicQueue;
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
@@ -526,7 +526,7 @@ pub fn new_full(
             keystore: keystore_container.keystore(),
             sync_oracle: sync_service.clone(),
             justification_sync_link: sync_service.clone(),
-            block_proposal_slot_portion: SlotProportion::new(2f32 / 3f32),
+            block_proposal_slot_portion: SlotProportion::new(95f32 / 100f32),
             max_block_proposal_slot_portion: None,
             telemetry: telemetry.as_ref().map(|x| x.handle()),
             compatibility_mode: Default::default(),

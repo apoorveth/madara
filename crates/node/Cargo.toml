@@ -90,6 +90,7 @@ mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
 mc-settlement = { workspace = true, features = ["clap"] }
 mc-storage = { workspace = true }
+mc-block-proposer = { workspace = true }
 pallet-starknet = { workspace = true }
 pallet-starknet-runtime-api = { workspace = true }
 starknet-core = { workspace = true }

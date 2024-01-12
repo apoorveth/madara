@@ -951,8 +951,8 @@ impl<T: Config> Pallet<T> {
         let block_timestamp = Self::block_timestamp();
 
         let chain_id = Self::chain_id();
-        let (transaction_commitment, event_commitment) =
-            mp_commitments::calculate_commitments::<T::SystemHash>(&transactions, &events, chain_id);
+        // let (transaction_commitment, event_commitment) =
+        //     mp_commitments::calculate_commitments::<T::SystemHash>(&transactions, &events, chain_id);
         let protocol_version = T::ProtocolVersion::get();
         let extra_data = None;
 
@@ -964,9 +964,9 @@ impl<T: Config> Pallet<T> {
                 sequencer_address,
                 block_timestamp,
                 transaction_count as u128,
-                transaction_commitment.into(),
+                Felt252Wrapper::ZERO.into(),
                 events.len() as u128,
-                event_commitment.into(),
+                Felt252Wrapper::ZERO.into(),
                 protocol_version,
                 extra_data,
             ),
