@@ -3,11 +3,11 @@
   "genesis_assets": [
     {
       "name": "BraavosAccount.json",
-      "sha3_256": "60230bf6e005c242d8c871e5095f3c4d4d8f2b421c2a8fe26e34b833dd0c989e"
+      "sha3_256": "e06006e67d6cb244a497ff32390c45d0a9c280cb32d8975ec00a4ad4caa7cb36"
     },
     {
       "name": "BraavosAccountBaseImpl.json",
-      "sha3_256": "13b917634166e8c0e229a92de3ea51309121c75bfdb457803549dc24a8f5a53d"
+      "sha3_256": "b2d1cc07d99354ecc4bd8a3d228531a20dd06bcf34e3731ba39b20e6e4f4d45e"
     },
     {
       "name": "ArgentAccount.json",
@@ -15,7 +15,7 @@
     },
     {
       "name": "BraavosCallAggregator.json",
-      "sha3_256": "8c653ded4d1917ba878d30193c4a7c4c62cc9454a0a990a695a97b757bad1c7f"
+      "sha3_256": "2c4054d50b3cd640b8915328c19441d9ab9a9d91b3b6fedd1ba2ae415db4f9ca"
     },
     {
       "name": "ERC20.json",
@@ -27,7 +27,7 @@
     },
     {
       "name": "genesis.json",
-      "sha3_256": "954b26a63a70ba92cbc79028fbdaf4f70105ba32ff71b60a24ecce775b4dd90c"
+      "sha3_256": "29f367878493ec3d3b465cf0617e45f82a6bc4c28216cdb1ecc9bd2a66cd6996"
     },
     {
       "name": "NoValidateAccount.casm.json",
@@ -43,7 +43,7 @@
     },
     {
       "name": "BraavosProxy.json",
-      "sha3_256": "cbfcff58ba4de538e1c369c886f6a6207a6b4c85dcd40e91cc670b0900763c9b"
+      "sha3_256": "22c394ac70970ad01b986f536da3ae1c31a307d54836ab4c8eb14605fdaa22f6"
     },
     {
       "name": "test.json",

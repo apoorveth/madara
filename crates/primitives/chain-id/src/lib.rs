@@ -20,7 +20,7 @@ pub const SN_MAIN_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldEl
 ]));
 
 /// ChainId for a custom Madara chain
-pub const MADARA_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldElement::from_mont([
+pub const MADARA_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::a::from_mont([
     18444025906882525153,
     18446744073709551615,
     18446744073709551615,
