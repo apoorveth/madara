@@ -72,7 +72,7 @@ use blockifier::execution::errors::{EntryPointExecutionError, PreExecutionError}
 use blockifier::state::cached_state::ContractStorageKey;
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
-use frame_support::traits::Time;
+use frame_support::traits::{Len, Time};
 use frame_system::pallet_prelude::*;
 use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
 use mp_digest_log::MADARA_ENGINE_ID;
@@ -324,6 +324,10 @@ pub mod pallet {
     #[pallet::unbounded]
     #[pallet::getter(fn l1_messages)]
     pub(super) type L1Messages<T: Config> = StorageValue<_, BTreeSet<Nonce>, ValueQuery>;
+
+    #[pallet::storage]
+    #[pallet::getter(fn disable_transaction_fee_storage)]
+    pub(super) type DisableTransactionFeeStorage<T: Config> = StorageValue<_, bool, ValueQuery>;
 
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
@@ -580,7 +584,10 @@ pub mod pallet {
                     &Self::get_block_context(),
                     &RuntimeExecutionConfigBuilder::new::<T>().build(),
                 )
-                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+                .map_err(|e| {
+                    log!(error, "failed to declare txn {}", e);
+                    Error::<T>::TransactionExecutionFailed
+                })?;
 
             let tx_hash = transaction.tx_hash();
             Self::emit_and_store_tx_and_fees_events(
@@ -711,6 +718,15 @@ pub mod pallet {
 
             Ok(())
         }
+
+        #[pallet::call_index(5)]
+        #[pallet::weight({0})]
+        pub fn set_disable_fee(origin: OriginFor<T>, value: bool) -> DispatchResult {
+            ensure_none(origin)?;
+
+            DisableTransactionFeeStorage::<T>::put(value);
+            Ok(())
+        }
     }
 
     #[pallet::inherent]
@@ -747,7 +763,17 @@ pub mod pallet {
             // otherwise we have a nonce error and everything fails.
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
 
-            let transaction = Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call)?;
+            let transaction = match Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call) {
+                Ok(tx) => tx,
+                Err(_) => {
+                    return ValidTransaction::with_tag_prefix("starknet")
+                        .priority(u64::MAX)
+                        .longevity(T::TransactionLongevity::get())
+                        .propagate(true)
+                        .and_provides((0, 0))
+                        .build();
+                }
+            };
 
             let tx_priority_info = Self::validate_unsigned_tx_nonce(&transaction)?;
 
@@ -1131,6 +1157,6 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn is_transaction_fee_disabled() -> bool {
-        T::DisableTransactionFee::get()
+        Self::disable_transaction_fee_storage()
     }
 }

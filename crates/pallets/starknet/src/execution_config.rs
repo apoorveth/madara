@@ -2,7 +2,7 @@ use mp_simulations::SimulationFlags;
 use mp_transactions::execution::ExecutionConfig;
 use sp_core::Get;
 
-use crate::Config;
+use crate::{Config, Pallet};
 
 /// Builder pattern for [`ExecutionConfig`]. Combines the
 /// execution configuration from the runtime with the possible
@@ -16,7 +16,7 @@ impl RuntimeExecutionConfigBuilder {
             disable_fee_charge: false,
             disable_validation: false,
             disable_nonce_validation: T::DisableNonceValidation::get(),
-            disable_transaction_fee: T::DisableTransactionFee::get(),
+            disable_transaction_fee: Pallet::<T>::disable_transaction_fee_storage(),
             offset_version: false,
         })
     }

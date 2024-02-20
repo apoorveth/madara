@@ -27,7 +27,7 @@
     },
     {
       "name": "genesis.json",
-      "sha3_256": "954b26a63a70ba92cbc79028fbdaf4f70105ba32ff71b60a24ecce775b4dd90c"
+      "sha3_256": "42079bf631bb9087ce67b1702bb53c6c7a3afaaa2a2084a742efd692ebd6bca9"
     },
     {
       "name": "NoValidateAccount.casm.json",
