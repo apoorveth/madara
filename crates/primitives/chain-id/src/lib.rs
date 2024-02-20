@@ -27,5 +27,13 @@ pub const MADARA_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldEle
     530251916243973616,
 ]));
 
+/// ChainId for a Starknet seplia
+pub const SN_SEPOLIA_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldElement::from_mont([
+    1555806712078248243,
+    18446744073708869172,
+    18446744073709551615,
+    507980251676163170,
+]));
+
 #[cfg(test)]
 mod tests;
