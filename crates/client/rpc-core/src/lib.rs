@@ -11,10 +11,11 @@ use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use starknet_api::transaction::Fee;
 
 pub mod utils;
 
-use mp_transactions::TransactionStatus;
+use mp_transactions::{HandleL1MessageTransaction, TransactionStatus};
 use pallet_starknet::genesis_loader::PredeployedAccount;
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_core::types::{
@@ -66,6 +67,14 @@ pub trait StarknetWriteRpcApi {
         &self,
         declare_transaction: BroadcastedDeclareTransaction,
     ) -> RpcResult<DeclareTransactionResult>;
+
+    /// Submit a new deploy account transaction
+    #[method(name = "consumeL1Message")]
+    async fn consume_l1_message(
+        &self,
+        l1_handler_transaction: HandleL1MessageTransaction,
+        fee: Fee,
+    ) -> RpcResult<InvokeTransactionResult>;
 }
 
 /// Starknet read rpc interface.

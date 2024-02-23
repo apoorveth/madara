@@ -26,7 +26,7 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
-use mp_transactions::{TransactionStatus, UserTransaction};
+use mp_transactions::{HandleL1MessageTransaction, TransactionStatus, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -43,7 +43,7 @@ use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
 use starknet_api::block::BlockHash;
 use starknet_api::hash::StarkHash;
-use starknet_api::transaction::Calldata;
+use starknet_api::transaction::{Calldata, Fee};
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
@@ -367,6 +367,21 @@ where
         }
 
         Ok(DeclareTransactionResult { transaction_hash: tx_hash, class_hash: class_hash.0 })
+    }
+
+    async fn consume_l1_message(
+        &self,
+        l1_handler_transaction: HandleL1MessageTransaction,
+        fee: Fee,
+    ) -> RpcResult<InvokeTransactionResult> {
+        let best_block_hash = self.client.info().best_hash;
+        let extrinsic = self
+            .client
+            .runtime_api()
+            .convert_l1_transaction(best_block_hash, l1_handler_transaction, fee)
+            .map_err(|_| StarknetRpcApiError::InternalServerError)?;
+        submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
+        Ok(InvokeTransactionResult { transaction_hash: FieldElement::ZERO })
     }
 
     /// Add an Invoke Transaction to invoke a contract function

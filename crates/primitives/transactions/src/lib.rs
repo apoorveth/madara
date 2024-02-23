@@ -20,6 +20,7 @@ use alloc::vec::Vec;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::transaction::transaction_types::TransactionType;
 use derive_more::From;
+use serde::{Deserialize, Serialize};
 use starknet_api::transaction::Fee;
 use starknet_core::types::{MsgFromL1, TransactionExecutionStatus, TransactionFinalityStatus};
 use starknet_ff::FieldElement;
@@ -202,7 +203,7 @@ pub struct DeployAccountTransaction {
     pub offset_version: bool,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub struct HandleL1MessageTransaction {

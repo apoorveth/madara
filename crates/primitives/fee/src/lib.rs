@@ -38,7 +38,7 @@ pub const FEE_TRANSFER_N_STORAGE_CHANGES: u8 = 2; // Sender and sequencer balanc
 /// Number of storage updates to actually charge for the fee transfer tx.
 pub const FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE: u8 = FEE_TRANSFER_N_STORAGE_CHANGES - 1; // Exclude the sequencer balance update, since it's charged once throughout the batch.
 
-pub static VM_RESOURCE_FEE_COSTS: [(&str, FixedU128); 7] = [
+pub static VM_RESOURCE_FEE_COSTS: [(&str, FixedU128); 8] = [
     ("n_steps", FixedU128::from_inner(10_000_000_000_000_000)),
     ("pedersen_builtin", FixedU128::from_inner(320_000_000_000_000_000)),
     ("range_check_builtin", FixedU128::from_inner(160_000_000_000_000_000)),
@@ -46,6 +46,7 @@ pub static VM_RESOURCE_FEE_COSTS: [(&str, FixedU128); 7] = [
     ("bitwise_builtin", FixedU128::from_inner(640_000_000_000_000_000)),
     ("poseidon_builtin", FixedU128::from_inner(320_000_000_000_000_000)),
     ("ec_op_builtin", FixedU128::from_inner(10_240_000_000_000_000_000)),
+    ("keccak_builtin", FixedU128::from_inner(20_480_000_000_000_000_000)),
 ];
 
 pub const TRANSFER_SELECTOR_NAME: &str = "Transfer";

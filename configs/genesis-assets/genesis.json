@@ -1,17 +1,22 @@
 {
-  "sierra_class_hash_to_casm_class_hash": [],
+  "sierra_class_hash_to_casm_class_hash": [
+    [
+      "0x035ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276",
+      "0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b"
+    ]
+  ],
   "contract_classes": [
     [
-      "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f",
+      "0x035ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276",
       {
-        "path": "genesis-assets/NoValidateAccount.json",
-        "version": 0
+        "path": "genesis-assets/NoValidateAccount.casm.json",
+        "version": 1
       }
     ]
   ],
   "contracts": [[
     "0x1",
-    "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f"
+    "0x035ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276"
   ]],
   "predeployed_accounts": [
     {
