@@ -9290,6 +9290,7 @@ dependencies = [
 [[package]]
 name = "sandbox"
 version = "0.1.0"
+source = "git+https://github.com/karnotxyz/zaun?branch=starkgate_testing#b97d2c3438adf4a40f41580258f1128ed42dd25b"
 dependencies = [
  "dirs",
  "ethers",
@@ -12097,6 +12098,7 @@ dependencies = [
 [[package]]
 name = "starknet-core-contract-client"
 version = "0.1.0"
+source = "git+https://github.com/karnotxyz/zaun?branch=starkgate_testing#b97d2c3438adf4a40f41580258f1128ed42dd25b"
 dependencies = [
  "async-trait",
  "ethers",
