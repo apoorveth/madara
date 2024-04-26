@@ -11,6 +11,7 @@ use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use starknet_api::transaction::{Fee, L1HandlerTransaction};
 
 pub mod utils;
 
@@ -66,6 +67,15 @@ pub trait StarknetWriteRpcApi {
         &self,
         declare_transaction: BroadcastedDeclareTransaction,
     ) -> RpcResult<DeclareTransactionResult>;
+
+    /// Temp consume_l1_message method for syncing data
+    /// from Sepolia to Madara.
+    #[method(name = "consumeL1Message")]
+    async fn consume_l1_message(
+        &self,
+        l1_handler_transaction: L1HandlerTransaction,
+        fee: Fee,
+    ) -> RpcResult<InvokeTransactionResult>;
 }
 
 /// Starknet read rpc interface.

@@ -401,6 +401,28 @@ where
             contract_address: Felt252Wrapper::from(contract_address).into(),
         })
     }
+
+    async fn consume_l1_message(
+        &self,
+        l1_handler_transaction: starknet_api::transaction::L1HandlerTransaction,
+        fee: Fee,
+    ) -> RpcResult<InvokeTransactionResult> {
+        let best_block_hash = self.client.info().best_hash;
+        let extrinsic = self
+            .client
+            .runtime_api()
+            .convert_l1_transaction(
+                best_block_hash,
+                L1HandlerTransaction {
+                    tx: l1_handler_transaction.clone(),
+                    tx_hash: l1_handler_transaction.compute_hash(self.chain_id()?.0.into(), false),
+                    paid_fee_on_l1: fee,
+                },
+            )
+            .map_err(|_| StarknetRpcApiError::InternalServerError)?;
+        submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
+        Ok(InvokeTransactionResult { transaction_hash: FieldElement::ZERO })
+    }
 }
 
 #[async_trait]

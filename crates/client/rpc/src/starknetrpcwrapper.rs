@@ -16,6 +16,7 @@ use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
+use starknet_api::transaction::{Fee, L1HandlerTransaction};
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
@@ -590,6 +591,16 @@ where
         deploy_account_transaction: BroadcastedDeployAccountTransaction,
     ) -> RpcResult<DeployAccountTransactionResult> {
         self.0.add_deploy_account_transaction(deploy_account_transaction).await
+    }
+
+    /// Temp consume_l1_message method for syncing data
+    /// from Sepolia to Madara.
+    async fn consume_l1_message(
+        &self,
+        l1_handler_transaction: L1HandlerTransaction,
+        fee: Fee,
+    ) -> RpcResult<InvokeTransactionResult> {
+        self.0.consume_l1_message(l1_handler_transaction, fee).await
     }
 }
 

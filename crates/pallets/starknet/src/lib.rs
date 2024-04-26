@@ -318,6 +318,10 @@ pub mod pallet {
     #[pallet::getter(fn chain_id)]
     pub type ChainIdStorage<T> = StorageValue<_, Felt252Wrapper, ValueQuery, DefaultChainId>;
 
+    #[pallet::storage]
+    #[pallet::getter(fn disable_transaction_fee_storage)]
+    pub(super) type DisableTransactionFeeStorage<T: Config> = StorageValue<_, bool, ValueQuery>;
+
     /// Default ChainId MADARA
     pub struct DefaultChainId {}
 
@@ -518,7 +522,10 @@ pub mod pallet {
                 }
                 _ => run_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee),
             }
-            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            .map_err(|e| {
+                log!(error, "Failed to invoke contract, error: {}", e);
+                Error::<T>::TransactionExecutionFailed
+            })?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
@@ -569,7 +576,10 @@ pub mod pallet {
             // Execute
             let tx_execution_infos =
                 run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
-                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+                    .map_err(|e| {
+                        log!(error, "Failed to declare contract, error: {}", e);
+                        Error::<T>::TransactionExecutionFailed
+                    })?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash(),
@@ -616,7 +626,10 @@ pub mod pallet {
             // Execute
             let tx_execution_infos =
                 run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
-                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+                    .map_err(|e| {
+                        log!(error, "Failed to deploy account, error {}", e);
+                        Error::<T>::TransactionExecutionFailed
+                    })?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
@@ -682,6 +695,15 @@ pub mod pallet {
 
             Ok(())
         }
+
+        #[pallet::call_index(5)]
+        #[pallet::weight({0})]
+        pub fn set_disable_fee(origin: OriginFor<T>, value: bool) -> DispatchResult {
+            ensure_none(origin)?;
+
+            DisableTransactionFeeStorage::<T>::put(value);
+            Ok(())
+        }
     }
 
     #[pallet::inherent]
@@ -718,8 +740,19 @@ pub mod pallet {
             // otherwise we have a nonce error and everything fails.
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
 
-            let transaction = Self::convert_runtime_calls_to_starknet_transaction(call.clone())
-                .map_err(|_| InvalidTransaction::Call)?;
+            let transaction = match Self::convert_runtime_calls_to_starknet_transaction(call.clone())
+                .map_err(|_| InvalidTransaction::Call)
+            {
+                Ok(tx) => tx,
+                Err(_) => {
+                    return ValidTransaction::with_tag_prefix("starknet")
+                        .priority(u64::MAX)
+                        .longevity(T::TransactionLongevity::get())
+                        .propagate(true)
+                        .and_provides((0, 0))
+                        .build();
+                }
+            };
             // Important to store the nonce before the call to prevalidate, because the `handle_nonce`
             // function will increment it
             let transaction_nonce = get_transaction_nonce(&transaction);
@@ -1137,7 +1170,7 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn is_transaction_fee_disabled() -> bool {
-        T::DisableTransactionFee::get()
+        Self::disable_transaction_fee_storage()
     }
 
     fn init_cached_state() -> CachedState<BlockifierStateAdapter<T>> {
