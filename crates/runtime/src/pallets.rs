@@ -192,7 +192,7 @@ parameter_types! {
     pub const TransactionLongevity: u64 = u64::MAX;
     pub const ProtocolVersion: u8 = 0;
     pub const ProgramHash: Felt252Wrapper = SN_OS_PROGRAM_HASH;
-    pub const L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, eth_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) } };
+    pub const L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: unsafe { NonZeroU128::new_unchecked(52568862) }, strk_l1_gas_price: unsafe { NonZeroU128::new_unchecked(969724343) }, eth_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(52568862) }, strk_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(969724343) } };
     pub ExecutionConstants: Arc<VersionedConstants> = get_execution_constants();
 }
 
