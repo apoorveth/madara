@@ -64,7 +64,7 @@ impl<T: Config> Pallet<T> {
             Transaction::AccountTransaction(transaction) => {
                 let mut state = BlockifierStateAdapter::<T>::default();
                 let block_context = Self::get_block_context();
-                let charge_fee = !<T as Config>::DisableTransactionFee::get();
+                let charge_fee = !DisableTransactionFeeStorage::<T>::get();
                 let tx_context = Arc::new(block_context.to_tx_context(transaction));
                 let string_nonce_checking = false;
 

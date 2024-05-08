@@ -510,7 +510,7 @@ pub mod pallet {
             // Init caches
             let mut state = BlockifierStateAdapter::<T>::default();
             let block_context = Self::get_block_context();
-            let charge_fee = !<T as Config>::DisableTransactionFee::get();
+            let charge_fee = !DisableTransactionFeeStorage::<T>::get();
 
             // Execute
             let tx_execution_infos = match transaction.tx.version() {
@@ -568,7 +568,7 @@ pub mod pallet {
             );
 
             let mut state = BlockifierStateAdapter::<T>::default();
-            let charge_fee = !<T as Config>::DisableTransactionFee::get();
+            let charge_fee = !DisableTransactionFeeStorage::<T>::get();
 
             // Execute
             let tx_execution_infos =
@@ -618,7 +618,7 @@ pub mod pallet {
             );
 
             let mut state = BlockifierStateAdapter::<T>::default();
-            let charge_fee = !<T as Config>::DisableTransactionFee::get();
+            let charge_fee = !DisableTransactionFeeStorage::<T>::get();
 
             // Execute
             let tx_execution_infos =
