@@ -239,6 +239,10 @@ impl<T: Config> Pallet<T> {
             Ok::<(), SimulationError>(())
         })?;
 
+        let simulation_flags = SimulationFlags {
+            charge_fee: !Self::is_transaction_fee_disabled(),
+            validate: true,
+        };
         let execution_infos = transactions_to_trace
             .iter()
             .map(|tx| {
@@ -248,7 +252,7 @@ impl<T: Config> Pallet<T> {
                     tx,
                     &mut transactional_state,
                     &block_context,
-                    &SimulationFlags::default(),
+                    &simulation_flags,
                 )
                 .map_err(|e| {
                     log::error!("Failed to reexecute a tx: {}", e);
